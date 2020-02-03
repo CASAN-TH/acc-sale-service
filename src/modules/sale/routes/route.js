@@ -14,6 +14,9 @@ module.exports = function (app) {
         .put(controller.update)
         .delete(controller.delete);
 
+    app.route("/api/import/sales")//.all(policy.isAllowed)
+    .post(controller.insertMany);
+
     app.param('saleId', controller.getByID);
 
     /**

@@ -23,6 +23,10 @@ exports.invokeRolesPolicies = function() {
         {
           resources: "/api/sales/:saleId",
           permissions: "*"
+        },
+        {
+          resources: "/api/import/sales",
+          permissions: "*"
         }
       ]
     }
