@@ -119,6 +119,7 @@ exports.delete = function(req, res) {
   });
 };
 
+
 exports.insertMany = function(req, res) {
   Sale.insertMany(req.body,(err, data) => {
     if (err) {
