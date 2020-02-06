@@ -17,6 +17,9 @@ module.exports = function (app) {
     app.route("/api/import/sales")//.all(policy.isAllowed)
     .post(controller.insertMany);
 
+    app.route("/api/interface/ocha")
+    .post(controller.interfaceOcha)
+
     app.param('saleId', controller.getByID);
 
     /**

@@ -2516,3 +2516,20 @@ describe("Sale Import routes tests", function() {
     Sale.deleteMany().exec(done);
   });
 });
+
+describe("ocha interface test",()=>{
+  it("should be get sale data from ochar",(done)=>{
+    request(app)
+      .post("/api/interface/ocha")
+      .send({ start_time: 1580490000, end_time: 1582995599 })
+      .expect(200)
+      .end(function(err, res) {
+        if (err) {
+          return done(err);
+        }
+        var resp = res.body;
+        // console.log(resp.data);
+        done();
+      });
+  })
+});
