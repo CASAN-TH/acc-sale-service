@@ -2517,19 +2517,61 @@ describe("Sale Import routes tests", function() {
   });
 });
 
-describe("ocha interface test",()=>{
-  it("should be get sale data from ochar",(done)=>{
+describe("ocha interface test", () => {
+  it("should be get sale data from ochar", done => {
+    // Step 1 : get shop list
     request(app)
-      .post("/api/interface/ocha")
-      .send({ start_time: 1580490000, end_time: 1582995599 })
+      .post("/api/interface/ocha/shops")
       .expect(200)
       .end(function(err, res) {
         if (err) {
           return done(err);
         }
         var resp = res.body;
-        // console.log(resp.data);
-        done();
+        // Step 2 : User choose shop for get set-cookie
+        request(app)
+          .post("/api/interface/ocha/shops/selected")
+          .send({ branch_shop_id: resp[3].shop_id })
+          .expect(200)
+          .end((err, res) => {
+            if (err) {
+              return done(err);
+            }
+            var payload = {
+              posocha: res.body.posocha,
+              filter: { start_time: 1580490000, end_time: 1582995599 },
+              pagination: { page_size: 15, pagination_result_count: 100 }
+            };
+            // Step 3 : get first page to 15 orders
+            request(app)
+              .post("/api/interface/ocha")
+              .send(payload)
+              .expect(200)
+              .end((err, res) => {
+                if (err) {
+                  return done(err);
+                }
+                let pbg = res.body.pagination.page_begins;
+                payload.pagination.page_begin = pbg[1];
+                // Step 4 : loop for get other pages orders with parameter page_begin from page_begins array
+                for (var i = 1; i < pbg.length; i++) {
+                  payload.pagination.page_begin = pbg[i];
+                  
+                  request(app)
+                    .post("/api/interface/ocha")
+                    .send(payload)
+                    .expect(200)
+                    .end((err, res) => {
+                      if (err) {
+                        return done(err);
+                      }
+                    });
+                  if (i === pbg.length - 1) {
+                    done();
+                  }
+                }
+              });
+          });
       });
-  })
+  });
 });
