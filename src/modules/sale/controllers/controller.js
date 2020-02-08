@@ -128,8 +128,16 @@ exports.delete = function(req, res) {
   });
 };
 
+
 exports.insertMany = function(req, res) {
-  Sale.insertMany(req.body, (err, data) => {
+  const reqBody = [];
+  req.body.orders.forEach(order=>{
+    var od = order;
+    od.shopId = req.body.shopId;
+    od.shopName = req.body.shopName;
+    reqBody.push(od);
+  })
+  Sale.insertMany(reqBody, (err, data) => {
     if (err) {
       return res.status(400).send({
         status: 400,
@@ -150,9 +158,7 @@ exports.getOchaShopList = (req, res) => {
     url: "https://live.ocha.in.th/api/shop/branch/get/",
     headers: {
       Authorization: authKey,
-      // " TGS eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJjYWxsZXIiOiJsb2dpYy1jbGllbnQiLCJhZGRyZXNzIjowLCJzaG9wX2lkIjo2NjM0NCwiYXBwX3R5cGUiOjIsInVpZCI6Mjc2MjAxLCJjbGllbnRfdHlwZSI6NTEyLCJleHAiOjE1ODA5OTczMjAsImRldmljZV9pZCI6MjM1MDN9.dPzEO9T89uhrYu2jc6tQM1tWr6w4JWEa4K4yBxi1hmBFTf1RDm3kkJ-t1742FBDOaEVvc5vqLDYQ_88hCZ7eb8du_lChYl9MOYOPH_vR-oTkBWla9HGr5Rt9jryyXekbvGsATDfWeQQsLkbp0yfGB-SQJWmKtTg_Gkw7WqEdK3rD1PmOOfezkimUP0HmRL8L1dF4ynLI3IWG_mmfqVLtqQlVaWnH20sWTDmUcuZI9diDjLg1znW4xfrSooZj9z3kMxR-_IyuXiPw-kXYPVDLoy0Obnenz-JAAwAzXR9l4aHCc7fabvuDwgeVezBEgF_-P5NEPZe3UTO0x11L3cEaaQ",
       cookie: cookie
-      // " _ga=GA1.3.1500102785.1579786690; _fbp=fb.2.1579786691460.187124307; _gid=GA1.3.1076144380.1580998410; __utma=21896485.1500102785.1579786690.1580998410.1580998410.1; __utmc=21896485; __utmz=21896485.1580998410.1.1.utmcsr=google|utmccn=(organic)|utmcmd=organic|utmctr=(not%20provided); posocha=MTU4MTAwMDczNXxOd3dBTkVWSk0xbEdWbEJYUkRKTFVUSkNWVkpNUVUxR1VVVXpUVkZCUTBsRFQwYzBVVWMxUTFGU1YxWlFSVXhVUkV0TlRUVkZOa0U9fF5QWmAzvNGOwRIVH4gKjf5oYT6KblFGINLfX02Kk9_A"
     },
     body: { branch_list_info_version: 0 },
     json: true
@@ -177,9 +183,7 @@ exports.selectOchaShop = async (req, res) => {
     url: "https://live.ocha.in.th/api/auth/branch/",
     headers: {
       Authorization: authKey,
-      // " TGS eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJjYWxsZXIiOiJsb2dpYy1jbGllbnQiLCJhZGRyZXNzIjowLCJzaG9wX2lkIjo2NjM0NCwiYXBwX3R5cGUiOjIsInVpZCI6Mjc2MjAxLCJjbGllbnRfdHlwZSI6NTEyLCJleHAiOjE1ODA5OTczMjAsImRldmljZV9pZCI6MjM1MDN9.dPzEO9T89uhrYu2jc6tQM1tWr6w4JWEa4K4yBxi1hmBFTf1RDm3kkJ-t1742FBDOaEVvc5vqLDYQ_88hCZ7eb8du_lChYl9MOYOPH_vR-oTkBWla9HGr5Rt9jryyXekbvGsATDfWeQQsLkbp0yfGB-SQJWmKtTg_Gkw7WqEdK3rD1PmOOfezkimUP0HmRL8L1dF4ynLI3IWG_mmfqVLtqQlVaWnH20sWTDmUcuZI9diDjLg1znW4xfrSooZj9z3kMxR-_IyuXiPw-kXYPVDLoy0Obnenz-JAAwAzXR9l4aHCc7fabvuDwgeVezBEgF_-P5NEPZe3UTO0x11L3cEaaQ",
       cookie: cookie
-      // " _ga=GA1.3.1500102785.1579786690; _fbp=fb.2.1579786691460.187124307; _gid=GA1.3.1076144380.1580998410; __utma=21896485.1500102785.1579786690.1580998410.1580998410.1; __utmc=21896485; __utmz=21896485.1580998410.1.1.utmcsr=google|utmccn=(organic)|utmcmd=organic|utmctr=(not%20provided); posocha=MTU4MTAwMDczNXxOd3dBTkVWSk0xbEdWbEJYUkRKTFVUSkNWVkpNUVUxR1VVVXpUVkZCUTBsRFQwYzBVVWMxUTFGU1YxWlFSVXhVUkV0TlRUVkZOa0U9fF5QWmAzvNGOwRIVH4gKjf5oYT6KblFGINLfX02Kk9_A"
     },
     body: req.body, //{ branch_shop_id: req.shop_id }
     json: true
@@ -203,9 +207,9 @@ exports.selectOchaShop = async (req, res) => {
   });
 };
 
-exports.interfaceOcha = (req, res) => {
+exports.interfaceOcha = async (req, res) => {
   // console.log(req.body);
-
+  let orders = [];
   var body = {
     column_filter: {
       uid_list: null,
@@ -230,15 +234,64 @@ exports.interfaceOcha = (req, res) => {
     json: true
   };
 
-  request(options, function(error, response, body) {
-    if (error) {
-      return res.status(400).send({
-        status: 400,
-        message: errorHandler.getErrorMessage(error)
-      });
+  const response = await fetch(
+    "https://live.ocha.in.th/api/transaction/history/",
+    {
+      method: "POST",
+      body: JSON.stringify(body),
+      headers: {
+        Authorization: authKey,
+        cookie: ` _ga=GA1.3.1500102785.1579786690; _fbp=fb.2.1579786691460.187124307; _gid=GA1.3.1076144380.1580998410; __utma=21896485.1500102785.1579786690.1580998410.1580998410.1; __utmc=21896485; __utmz=21896485.1580998410.1.1.utmcsr=google|utmccn=(organic)|utmcmd=organic|utmctr=(not%20provided); posocha=${req.body.posocha}`
+      }
     }
+  );
+  const json = await response.json();
+  // console.log(json);
 
-    // console.log(body.orders.length);
-    res.jsonp(body);
+  const promise = json.pagination.page_begins.map(async (pbg, idx) => {
+    body.pagination.page_begin = pbg;
+    const response = await fetch(
+      "https://live.ocha.in.th/api/transaction/history/",
+      {
+        method: "POST",
+        body: JSON.stringify(body),
+        headers: {
+          Authorization: authKey,
+          cookie: ` _ga=GA1.3.1500102785.1579786690; _fbp=fb.2.1579786691460.187124307; _gid=GA1.3.1076144380.1580998410; __utma=21896485.1500102785.1579786690.1580998410.1580998410.1; __utmc=21896485; __utmz=21896485.1580998410.1.1.utmcsr=google|utmccn=(organic)|utmcmd=organic|utmctr=(not%20provided); posocha=${req.body.posocha}`
+        }
+      }
+    );
+    const json = await response.json();
+    json.orders.forEach(od => {
+      // console.log(od);
+      
+      let ood = {
+        no: od.payments[0].receipt_number_v2,
+        createdAt: od.order_time,
+        status: "shipped",
+        customerName: od.name,
+        paymentProvider: "cash",
+        total: od.money_payable,
+        paidAt: od.payments[0].upd_time,
+        paidAmount: od.payments[0].money_to_pay,
+        note: od.note,
+        items: []
+      }
+      od.items.forEach(item=>{
+        ood.items.push({
+          itemCode: item.item_cid,
+          itemName: item.item_name,
+          itemQty: item.quantity,
+          itemPrice: item.item_price.unit_price,
+          itemSubtotal: item.money_nominal
+        });
+      })
+
+      orders.push(ood);
+    });
   });
+  await Promise.all(promise);
+  // console.log(orders.length);
+  res.jsonp(orders);
+  
 };
