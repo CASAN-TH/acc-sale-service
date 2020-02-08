@@ -130,14 +130,14 @@ exports.delete = function(req, res) {
 
 
 exports.insertMany = function(req, res) {
-  const reqBody = [];
-  req.body.orders.forEach(order=>{
-    var od = order;
-    od.shopId = req.body.shopId;
-    od.shopName = req.body.shopName;
-    reqBody.push(od);
-  })
-  Sale.insertMany(reqBody, (err, data) => {
+  // const reqBody = [];
+  // req.body.orders.forEach(order=>{
+  //   var od = order;
+  //   od.shopId = req.body.shopId;
+  //   od.shopName = req.body.shopName;
+  //   reqBody.push(od);
+  // })
+  Sale.insertMany(req.body, (err, data) => {
     if (err) {
       return res.status(400).send({
         status: 400,
