@@ -128,15 +128,7 @@ exports.delete = function(req, res) {
   });
 };
 
-
 exports.insertMany = function(req, res) {
-  // const reqBody = [];
-  // req.body.orders.forEach(order=>{
-  //   var od = order;
-  //   od.shopId = req.body.shopId;
-  //   od.shopName = req.body.shopName;
-  //   reqBody.push(od);
-  // })
   Sale.insertMany(req.body, (err, data) => {
     if (err) {
       return res.status(400).send({
@@ -152,6 +144,7 @@ exports.insertMany = function(req, res) {
   });
 };
 
+// 1. อ่านข้อมูลหน้าร้านทั้งหมดจาก ocha owner account
 exports.getOchaShopList = (req, res) => {
   var options = {
     method: "POST",
@@ -176,8 +169,8 @@ exports.getOchaShopList = (req, res) => {
   });
 };
 
+// 2. Auth เข้าทีละร้านเพื่ออ่าน  Set-Cookie ใน Response Header
 exports.selectOchaShop = async (req, res) => {
-  // console.log(req.body);
   var options = {
     method: "POST",
     url: "https://live.ocha.in.th/api/auth/branch/",
@@ -185,7 +178,8 @@ exports.selectOchaShop = async (req, res) => {
       Authorization: authKey,
       cookie: cookie
     },
-    body: req.body, //{ branch_shop_id: req.shop_id }
+    //2.1 รับ request payload จาก client ทีละร้าน รูปแบบ{ branch_shop_id: req.shop_id }
+    body: req.body,
     json: true
   };
 
@@ -197,20 +191,24 @@ exports.selectOchaShop = async (req, res) => {
       });
     }
     let result = {
+      // 2.2 อ่าน  Set-Cookie ใน Response Header
       posocha: response.headers["set-cookie"]
         .toString()
         .split(";")[0]
         .replace("posocha=", "")
     };
-
+    // 2.3 response Set-Cookie Header กลับไปเพื่อเรียกจ้อมูลร้านตาม request
     res.jsonp(result);
   });
 };
 
+// 3. อ่านข้อมูล Orders แต่ละร้านค้าจาก cookies param
 exports.interfaceOcha = async (req, res) => {
-  // console.log(req.body);
   let orders = [];
-  var body = {
+  const url = "https://live.ocha.in.th/api/transaction/history/";
+  const cookie = ` _ga=GA1.3.1500102785.1579786690; _fbp=fb.2.1579786691460.187124307; _gid=GA1.3.1076144380.1580998410; __utma=21896485.1500102785.1579786690.1580998410.1580998410.1; __utmc=21896485; __utmz=21896485.1580998410.1.1.utmcsr=google|utmccn=(organic)|utmcmd=organic|utmctr=(not%20provided); posocha=${req.body.posocha}`;
+
+  let body = {
     column_filter: {
       uid_list: null,
       payment_type_list: null,
@@ -219,52 +217,33 @@ exports.interfaceOcha = async (req, res) => {
       include_e_payment: true,
       payment_status_list: [0, 2, 6, 7]
     },
-    filter: req.body.filter,
-    pagination: req.body.pagination
+    filter: req.body.filter, // prarameter สำหรับกรองวันที่
+    pagination: req.body.pagination // prarameter สำหรับกรองหน้าเริ่มต้นของข้อมูล
   };
 
-  var options = {
+  const options = {
     method: "POST",
-    url: "https://live.ocha.in.th/api/transaction/history/",
+    body: JSON.stringify(body),
     headers: {
       Authorization: authKey,
-      cookie: ` _ga=GA1.3.1500102785.1579786690; _fbp=fb.2.1579786691460.187124307; _gid=GA1.3.1076144380.1580998410; __utma=21896485.1500102785.1579786690.1580998410.1580998410.1; __utmc=21896485; __utmz=21896485.1580998410.1.1.utmcsr=google|utmccn=(organic)|utmcmd=organic|utmctr=(not%20provided); posocha=${req.body.posocha}`
-    },
-    body: body,
-    json: true
+      cookie: cookie
+    }
   };
 
-  const response = await fetch(
-    "https://live.ocha.in.th/api/transaction/history/",
-    {
-      method: "POST",
-      body: JSON.stringify(body),
-      headers: {
-        Authorization: authKey,
-        cookie: ` _ga=GA1.3.1500102785.1579786690; _fbp=fb.2.1579786691460.187124307; _gid=GA1.3.1076144380.1580998410; __utma=21896485.1500102785.1579786690.1580998410.1580998410.1; __utmc=21896485; __utmz=21896485.1580998410.1.1.utmcsr=google|utmccn=(organic)|utmcmd=organic|utmctr=(not%20provided); posocha=${req.body.posocha}`
-      }
-    }
-  );
+  const response = await fetch(url, options);
+
+  // 3.1. อ่านข้อมูลหน้าแรกเพื่อให้ได้ข้มูลเพจทั้งหมด json.pagination.page_begins
   const json = await response.json();
-  // console.log(json);
 
   const promise = json.pagination.page_begins.map(async (pbg, idx) => {
+    // 3.2. อ่านข้อมูล Orders แต่ละเพจ
     body.pagination.page_begin = pbg;
-    const response = await fetch(
-      "https://live.ocha.in.th/api/transaction/history/",
-      {
-        method: "POST",
-        body: JSON.stringify(body),
-        headers: {
-          Authorization: authKey,
-          cookie: ` _ga=GA1.3.1500102785.1579786690; _fbp=fb.2.1579786691460.187124307; _gid=GA1.3.1076144380.1580998410; __utma=21896485.1500102785.1579786690.1580998410.1580998410.1; __utmc=21896485; __utmz=21896485.1580998410.1.1.utmcsr=google|utmccn=(organic)|utmcmd=organic|utmctr=(not%20provided); posocha=${req.body.posocha}`
-        }
-      }
-    );
+    const response = await fetch(url, options);
     const json = await response.json();
+    // 3.3. Map ข้อมูล Orders ตามโครงสร้างของเรา
     json.orders.forEach(od => {
       // console.log(od);
-      
+
       let ood = {
         no: od.payments[0].receipt_number_v2,
         createdAt: od.order_time,
@@ -276,8 +255,8 @@ exports.interfaceOcha = async (req, res) => {
         paidAmount: od.payments[0].money_to_pay,
         note: od.note,
         items: []
-      }
-      od.items.forEach(item=>{
+      };
+      od.items.forEach(item => {
         ood.items.push({
           itemCode: item.item_cid,
           itemName: item.item_name,
@@ -285,13 +264,14 @@ exports.interfaceOcha = async (req, res) => {
           itemPrice: item.item_price.unit_price,
           itemSubtotal: item.money_nominal
         });
-      })
+      });
 
       orders.push(ood);
     });
   });
+
+  // 3.4.  รอ loop อ่านข้อมูลจนครบตามสัญญา (promise)
   await Promise.all(promise);
-  // console.log(orders.length);
+
   res.jsonp(orders);
-  
 };

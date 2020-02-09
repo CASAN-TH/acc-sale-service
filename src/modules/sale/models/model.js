@@ -5,7 +5,11 @@ var Schema = mongoose.Schema;
 
 
 var SaleSchema = new Schema({
-    no: String,
+    no: {
+        type: String,
+        required: true,
+        unique: true
+    },
     createdAt:Date,	
     status:String,	
     customerName:String,	
