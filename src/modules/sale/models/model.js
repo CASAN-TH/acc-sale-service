@@ -37,6 +37,13 @@ var SaleSchema = new Schema({
         itemSubtotal:Number,	
         itemNote:String,
     }],
+    discounts: [{
+        name:String,
+        value:Number,
+        quantity:Number,
+        amount: Number
+    }],
+    voidedAt:Date,
     shopId: String,
     shopName: String,
     created: {

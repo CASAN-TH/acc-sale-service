@@ -233,30 +233,43 @@ exports.interfaceOcha = async (req, res) => {
   const response = await fetch(url, options);
 
   // 3.1. อ่านข้อมูลหน้าแรกเพื่อให้ได้ข้มูลเพจทั้งหมด json.pagination.page_begins
-  const json = await response.json();
-
-  const promise = json.pagination.page_begins.map(async (pbg, idx) => {
+  const json1 = await response.json();
+  const promise = json1.pagination.page_begins.map(async (pbg, idx) => {
     // 3.2. อ่านข้อมูล Orders แต่ละเพจ
     body.pagination.page_begin = pbg;
+    const options = {
+      method: "POST",
+      body: JSON.stringify(body),
+      headers: {
+        Authorization: authKey,
+        cookie: cookie
+      }
+    };
     const response = await fetch(url, options);
     const json = await response.json();
-    // 3.3. Map ข้อมูล Orders ตามโครงสร้างของเรา
-    json.orders.forEach(od => {
-      // console.log(od);
 
+    
+    // 3.3. Map ข้อมูล Orders ตามโครงสร้างของเรา
+    const promiseOrd = json.orders.map(async (od, idx) => {
+      
       let ood = {
         no: od.payments[0].receipt_number_v2,
-        createdAt: od.order_time,
-        status: "shipped",
-        customerName: od.name,
+        createdAt: od.order.add_time,
+        status: od.order.status,
+        customerName: od.order.name,
         paymentProvider: "cash",
-        total: od.money_payable,
+        subtotal: 0,
+        discount: 0,
+        total: od.order.money_payable,
         paidAt: od.payments[0].upd_time,
         paidAmount: od.payments[0].money_to_pay,
-        note: od.note,
-        items: []
+        note: od.order.note,
+        items: [],
+        discounts: [],
+        voidedAt: od.voided ? od.voided.upd_time : null
       };
       od.items.forEach(item => {
+        ood.subtotal += parseInt(item.money_nominal);
         ood.items.push({
           itemCode: item.item_cid,
           itemName: item.item_name,
@@ -265,9 +278,23 @@ exports.interfaceOcha = async (req, res) => {
           itemSubtotal: item.money_nominal
         });
       });
+      if (od.discounts) {
+        od.discounts.forEach(discount => {
+          ood.discountAmount += parseInt(discount.discounted_value);
+          ood.discounts.push({
+            name: discount.name,
+            value: discount.value,
+            quantity: discount.quantity,
+            amount: discount.discounted_value
+          });
+        });
+      }
 
       orders.push(ood);
     });
+    await Promise.all(promiseOrd);
+
+    
   });
 
   // 3.4.  รอ loop อ่านข้อมูลจนครบตามสัญญา (promise)
