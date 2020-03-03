@@ -304,7 +304,7 @@ exports.startdate = function(req, res, next, enddate) {
   var end = new Date(enddate);
   var startdate = req.startdate;
   Sale.find({ paidAt: { $gte: startdate, $lte: end }, status: "0" })
-    .sort("-created")
+    .sort("paidAt")
     .exec(function(err, data) {
       if (err) {
         return next(err);
