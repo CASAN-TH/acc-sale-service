@@ -28,7 +28,7 @@ module.exports = function(app) {
   app.route("/api/interface/ocha/shops/selected").post(controller.selectOchaShop);
 
   app
-    .route("/api/excelreports/:startdate/:enddate")
+    .route("/api/export/:startdate/:enddate")
     .get(controller.excelreports);
 
   app.param("saleId", controller.getByID);
