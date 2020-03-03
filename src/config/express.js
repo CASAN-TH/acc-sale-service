@@ -3,6 +3,7 @@ const bodyParser = require("body-parser");
 const jwt = require("express-jwt");
 const config = require("./config");
 const app = express();
+const json2xls = require('json2xls');
 
 var glob = require("glob"),
   path = require("path"),
@@ -36,6 +37,8 @@ app.use(
     credentialsRequired: false
   })
 );
+
+app.use(json2xls.middleware);
 
 app.get("/", function(req, res) {
   res.jsonp({

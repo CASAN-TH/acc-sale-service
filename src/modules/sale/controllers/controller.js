@@ -248,10 +248,8 @@ exports.interfaceOcha = async (req, res) => {
     const response = await fetch(url, options);
     const json = await response.json();
 
-    
     // 3.3. Map ข้อมูล Orders ตามโครงสร้างของเรา
     const promiseOrd = json.orders.map(async (od, idx) => {
-      
       let ood = {
         no: od.payments[0].receipt_number_v2,
         createdAt: od.order.add_time,
@@ -293,12 +291,58 @@ exports.interfaceOcha = async (req, res) => {
       orders.push(ood);
     });
     await Promise.all(promiseOrd);
-
-    
   });
 
   // 3.4.  รอ loop อ่านข้อมูลจนครบตามสัญญา (promise)
   await Promise.all(promise);
 
   res.jsonp(orders);
+};
+
+// export การขาย
+exports.startdate = function(req, res, next, enddate) {
+  var end = new Date(enddate);
+  var startdate = req.startdate;
+  Sale.find({ paidAt: { $gte: startdate, $lte: end }, status: "0" })
+    .sort("-created")
+    .exec(function(err, data) {
+      if (err) {
+        return next(err);
+      } else if (!data) {
+        return res.status(404).send({
+          message: "No data found"
+        });
+      }
+      req.sales = data;
+      next();
+    });
+};
+
+exports.excelreports = function (req, res, next) {
+  var items = [];
+  var data = req.sales ? req.sales : [];
+  data.forEach(function (itm) {
+    items.push({
+      reportdate: formatDate(itm.created),
+      reporttime: formatTime(itm.created), //new Date(itm.created).toLocaleTimeString(),
+      reporter: itm.name,
+      value: itm.aqi,
+      lat: itm.lat,
+      lng: itm.lng
+    });
+  });
+  res.xls("sales.xlsx", items);
+  //res.jsonp({ orders: orderslist});
+};
+
+function formatDate(date) {
+  var d = new Date(date),
+    month = "" + (d.getMonth() + 1),
+    day = "" + d.getDate(),
+    year = d.getFullYear();
+
+  if (month.length < 2) month = "0" + month;
+  if (day.length < 2) day = "0" + day;
+
+  return [year, month, day].join("-");
 };

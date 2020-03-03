@@ -27,7 +27,18 @@ module.exports = function(app) {
   app.route("/api/interface/ocha/shops").post(controller.getOchaShopList);
   app.route("/api/interface/ocha/shops/selected").post(controller.selectOchaShop);
 
+  app
+    .route("/api/excelreports/:startdate/:enddate")
+    .get(controller.excelreports);
+
   app.param("saleId", controller.getByID);
+
+  app.param('startdate', function (req, res, next, startdate) {
+    req.startdate = startdate;
+    next();
+  });
+
+  app.param('enddate', controller.startdate);
 
   /**
    * Message Queue
