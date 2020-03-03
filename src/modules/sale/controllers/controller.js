@@ -331,7 +331,8 @@ exports.excelreports = function(req, res, next) {
       customerTaxID:"",
       customerBranch: "",
       amount: itm.paidAmount,
-      vat: itm.paidAmount/1.07,
+      excludeVat:  (itm.paidAmount/1.07).toFixed(2),
+      vat: itm.paidAmount-(itm.paidAmount/1.07).toFixed(2),
       saleBranch: itm.shopName
     });
     i++;
