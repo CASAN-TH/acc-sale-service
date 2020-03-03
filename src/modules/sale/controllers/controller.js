@@ -318,20 +318,24 @@ exports.startdate = function(req, res, next, enddate) {
     });
 };
 
-exports.excelreports = function (req, res, next) {
+exports.excelreports = function(req, res, next) {
   var items = [];
   var data = req.sales ? req.sales : [];
-  // data.forEach(function (itm) {
-  //   items.push({
-  //     reportdate: formatDate(itm.created),
-  //     reporttime: formatTime(itm.created), //new Date(itm.created).toLocaleTimeString(),
-  //     reporter: itm.name,
-  //     value: itm.aqi,
-  //     lat: itm.lat,
-  //     lng: itm.lng
-  //   });
-  // });
-  res.xls("sales.xlsx", data);
+  var i = 1;
+  data.forEach(function(itm) {
+    items.push({
+      no: i,
+      docDate: formatDate(itm.paidAt),
+      docNo: itm.no,
+      customerName: "",
+      customerTaxID:"",
+      customerBranch: "",
+      amount: itm.paidAmount,
+      vat: itm.paidAmount/1.07
+    });
+    i++;
+  });
+  res.xls("sales.xlsx", items);
   //res.jsonp({ orders: orderslist});
 };
 
@@ -345,4 +349,4 @@ function formatDate(date) {
   if (day.length < 2) day = "0" + day;
 
   return [year, month, day].join("-");
-};
+}
